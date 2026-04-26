@@ -1,13 +1,21 @@
-import Modal from "@/components/Modal/Modal";
-import NoteDetailsClient from "@/app/notes/[id]/NoteDetails.client"; 
+import { fetchNoteById } from "@/lib/api";
+import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import NotePreviewModal from "./NotePreview.client"; // Переконайся, що ім'я файлу збігається
 
-export default async function NoteModal({ params }: { params: Promise<{ id: string }> }) {
+type Props = { params: Promise<{ id: string }> };
+
+export default async function NoteModalPage({ params }: Props) {
   const { id } = await params;
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: ["note", id],
+    queryFn: () => fetchNoteById(id),
+  });
 
   return (
-    // Додаємо порожню функцію або логіку закриття, якщо Modal її вимагає
-    <Modal onClose={() => {}}> 
-      <NoteDetailsClient id={id} />
-    </Modal>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <NotePreviewModal id={id} />
+    </HydrationBoundary>
   );
 }
